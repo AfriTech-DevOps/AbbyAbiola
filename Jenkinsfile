@@ -81,16 +81,12 @@ pipeline {
                     // Set the Kubernetes namespace based on the branch
                     if (BRANCH_NAME == 'qa') {
                         NAMESPACE = 'qa-namespace'
-                     else if (BRANCH_NAME == 'prod') {
+                    } else if (BRANCH_NAME == 'prod') {
                         NAMESPACE = 'prod-namespace'
-                    else if (BRANCH_NAME == 'dev') {
+                    } else if (BRANCH_NAME == 'dev') {
                         NAMESPACE = 'dev-namespace'
                     }
-                    else {
-                        NAMESPACE = 'default'
-                    }
-                }
-            }
+            
                     sh "kubectl apply -f k8s/${NAMESPACE}/"
                 }
             }
