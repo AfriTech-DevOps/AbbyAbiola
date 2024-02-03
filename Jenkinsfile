@@ -74,9 +74,16 @@ pipeline {
         }
 
         stage('Deployment to Kubernetes') {
+            
+            when {
+                anyOf {
+                    branch 'qa'
+                    branch 'prod'
+                    branch 'dev'
+                }
+            }
             steps {
                 script {
-                    // Set the Kubernetes namespace based on the branch
                     if (BRANCH_NAME == 'qa') {
                         NAMESPACE = 'qa-namespace'
                     } else if (BRANCH_NAME == 'prod') {
@@ -84,10 +91,12 @@ pipeline {
                     } else if (BRANCH_NAME == 'dev') {
                         NAMESPACE = 'dev-namespace'
                     }
-            
+
+                    // Apply Kubernetes manifests
                     sh "kubectl apply -f k8s/${NAMESPACE}/"
                 }
             }
         }
     }
+}
 }
