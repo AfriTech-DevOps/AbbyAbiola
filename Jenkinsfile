@@ -18,8 +18,6 @@ pipeline {
         SCANNER_HOME = tool 'sonar-scanner'
         DOCKERHUB_CREDENTIALS = credentials('Docker_hub')
         KUBE_CONFIG = credentials('KUBECRED')
-        BRANCH_NAME = 'dev' // Set the desired branch name here
-        BRANCH_NAME = env.BRANCH_NAME // Set BRANCH_NAME here
         NAMESPACE = determineTargetEnvironment()
     }
 
@@ -67,7 +65,8 @@ pipeline {
                 }
             }
         }
- stage('Login to DockerHUB') {
+
+        stage('Login to DockerHUB') {
             steps {
                 script {
                     sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
@@ -104,7 +103,6 @@ pipeline {
             }
         }
 
-
         stage('Kubernetes Deployment') {
             when {
                 expression {
@@ -114,7 +112,14 @@ pipeline {
             steps {
                 script {
                     // Determine the Kubernetes namespace
-                    NAMESPACE = determineTargetEnvironment()
+                    if (BRANCH_NAME == 'qa') {
+                        NAMESPACE = 'qa-namespace'
+                    } else if (BRANCH_NAME == 'prod') {
+                        NAMESPACE = 'prod-namespace'
+                    } else if (BRANCH_NAME == 'dev') {
+                        NAMESPACE = 'dev-namespace'
+                    }
+
                     // Apply Kubernetes manifests
                     sh "kubectl apply -f k8s/${NAMESPACE}/"
                     echo "Deployment to ${NAMESPACE} Namespace Successful"
