@@ -5,18 +5,13 @@ pipeline {
         SCANNER_HOME = tool 'sonar-scanner'
         DOCKERHUB_CREDENTIALS = credentials('Docker_hub')
         KUBE_CONFIG = credentials('KUBECRED')
-        NAMESPACE = ''
+        NAMESPACE = determineTargetEnvironment()
     }
 
     stages {
-        stage('Cleaning up workspace') {
-            steps {
-                cleanWs()
-            }
-        }
-
         stage('Checkout from Git') {
             steps {
+                cleanWs() // Clean workspace before checking out code
                 checkout([$class: 'GitSCM',
                     branches: [[name: '*/dev'], [name: '*/qa'], [name: '*/prod']],
                     extensions: [],
@@ -24,17 +19,21 @@ pipeline {
             }
         }
 
-        stage('Sonarqube Analysis') {
+        stage('Code Analysis') {
             steps {
-                withSonarQubeEnv('sonar-server') {
-                    sh "$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Devproject -Dsonar.projectKey=Devproject"
+                script {
+                    // Run SonarQube analysis
+                    withSonarQubeEnv('sonar-server') {
+                        sh "$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Devproject -Dsonar.projectKey=Devproject"
+                    }
                 }
             }
         }
 
-        stage('Trivy File Scan') {
+        stage('Static Code Security Scan') {
             steps {
                 script {
+                    // Run Trivy security scan on code files
                     sh '/usr/local/bin/trivy fs . > trivy_result.txt'
                 }
             }
@@ -43,47 +42,46 @@ pipeline {
         stage('Quality Gate') {
             steps {
                 script {
+                    // Wait for SonarQube Quality Gate to pass
                     waitForQualityGate abortPipeline: false, credentialsId: 'Sonar-Token'
                 }
             }
         }
 
-        stage('Login to DockerHUB') {
+        stage('Docker Build and Push') {
             steps {
                 script {
-                    sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
-                    echo 'Login Succeeded'
-                }
-            }
-        }
-
-        stage('Docker Build') {
-            steps {
-                script {
+                    // Build Docker image and push to Docker Hub
                     sh 'docker build -t abimbola1981/abbyraphee:latest .'
-                    echo "Image Build Successfully"
-                }
-            }
-        }
-
-        stage('Trivy Image Scan') {
-            steps {
-                script {
-                    sh '/usr/local/bin/trivy image abimbola1981/abbyraphee:latest > trivy_image_result.txt'
-                    sh 'pwd'
-                }
-            }
-        }
-
-        stage('Docker Push') {
-            steps {
-                script {
+                    sh 'docker login -u $DOCKERHUB_CREDENTIALS_USR -p $DOCKERHUB_CREDENTIALS_PSW'
                     sh 'docker push abimbola1981/abbyraphee:latest'
-                    echo "Push Image to Registry"
+                    echo "Image Build and Pushed Successfully"
                 }
-        
+            }
+        }
+
+        stage('Kubernetes Deployment') {
+            when {
+                expression {
+                    BRANCH_NAME == 'qa' || BRANCH_NAME == 'prod' || BRANCH_NAME == 'dev'
+                }
+            }
+            steps {
+                script {
+                    // Determine the Kubernetes namespace
+                    if (BRANCH_NAME == 'qa') {
+                        NAMESPACE = 'qa-namespace'
+                    } else if (BRANCH_NAME == 'prod') {
+                        NAMESPACE = 'prod-namespace'
+                    } else if (BRANCH_NAME == 'dev') {
+                        NAMESPACE = 'dev-namespace'
+                    }
+
+                    // Apply Kubernetes manifests
+                    sh "kubectl apply -f k8s/${NAMESPACE}/"
+                    echo "Deployment to ${NAMESPACE} Namespace Successful"
+                }
             }
         }
     }
 }
-
