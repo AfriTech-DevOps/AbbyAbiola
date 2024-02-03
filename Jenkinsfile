@@ -30,12 +30,12 @@ pipeline {
                     sh "$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Devproject -Dsonar.projectKey=Devproject"
                 }
             }
-        }
-
+     }     
         stage('Trivy File Scan') {
-             steps {
+    steps {
+        sh '/usr/local/bin/trivy --exit-code 0 --severity HIGH,CRITICAL --no-progress abimbola1981/abbyraphee:latest'
         sh '/usr/local/bin/trivy fs . > trivy_result.txt'
-        archiveArtifacts artifacts: 'trivy_result.txt', onlyIfSuccessful: true
+
             }
         }
 
