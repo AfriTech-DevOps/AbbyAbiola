@@ -30,19 +30,20 @@ pipeline {
                     sh "$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Devproject -Dsonar.projectKey=Devproject"
                 }
             }
+        }
 
         stage('Trivy File Scan') {
             steps {
-            script {
-                sh '/usr/local/bin/trivy fs . > trivy_result.txt'
+                script {
+                    sh '/usr/local/bin/trivy fs . > trivy_result.txt'
+                }
             }
         }
-    }
 
         stage('Quality Gate') {
             steps {
                 script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
+                    waitForQualityGate abortPipeline: false, credentialsId: 'Sonar-Token'
                 }
             }
         }
@@ -50,64 +51,61 @@ pipeline {
         stage('Login to DockerHUB') {
             steps {
                 script {
-                sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
-                echo 'Login Succeeded'
+                    sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
+                    echo 'Login Succeeded'
+                }
             }
         }
-    }
 
         stage('Docker Build') {
             steps {
                 script {
-                sh 'docker build -t abimbola1981/abbyraphee:latest .' 
-                echo "Image Build Successfully"
+                    sh 'docker build -t abimbola1981/abbyraphee:latest'
+                    echo "Image Build Successfully"
+                }
             }
         }
-    }
 
         stage('Trivy Image Scan') {
             steps {
                 script {
-
-                sh '/usr/local/bin/trivy image abimbola1981/abbyraphee:latest > trivy_image_result.txt'
-                sh 'pwd'
+                    sh '/usr/local/bin/trivy image abimbola1981/abbyraphee:latest > trivy_image_result.txt'
+                    sh 'pwd'
+                }
             }
         }
-    }
 
         stage('Docker Push') {
             steps {
                 script {
-                sh 'docker push abimbola1981/abbyraphee:latest'
-                echo "Push Image to Registry"
-            }
-        }
-    }
-
-        stage('Deployment to Kubernetes') {
-            
-            when {
-                anyOf {
-                    branch 'qa'
-                    branch 'prod'
-                    branch 'dev'
-                }
-            }
-            steps {
-                script {
-                    if (BRANCH_NAME == 'qa') {
-                        NAMESPACE = 'qa-namespace'
-                    } else if (BRANCH_NAME == 'prod') {
-                        NAMESPACE = 'prod-namespace'
-                    } else if (BRANCH_NAME == 'dev') {
-                        NAMESPACE = 'dev-namespace'
-                    }
-
-                    // Apply Kubernetes manifests
-                    sh "kubectl apply -f k8s/${NAMESPACE}/"
+                    sh 'docker push abimbola1981/abbyraphee:latest'
+                    echo "Push Image to Registry"
                 }
             }
         }
     }
-}
+
+    stage('Deployment to Kubernetes') {
+        when {
+            anyOf {
+                branch 'qa'
+                branch 'prod'
+                branch 'dev'
+            }
+        }
+        steps {
+            script {
+                if (BRANCH_NAME == 'qa') {
+                    NAMESPACE = 'qa-namespace'
+                } else if (BRANCH_NAME == 'prod') {
+                    NAMESPACE = 'prod-namespace'
+                } else if (BRANCH_NAME == 'dev') {
+                    NAMESPACE = 'dev-namespace'
+                }
+
+                // Apply Kubernetes manifests
+                sh "kubectl apply -f k8s/${NAMESPACE}/"
+            }
+        }
+    }
 }
