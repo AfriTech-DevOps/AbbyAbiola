@@ -111,6 +111,14 @@ pipeline{
                     env.BRANCH_NAME == 'qa' || env.BRANCH_NAME == 'prod' || env.BRANCH_NAME == 'dev'
                 }
             }
+        stage('Set KUBECONFIG') {
+            steps {
+                script {
+                    env.KUBECONFIG = '/root/.kube/config'
+                }
+            }
+        }
+
             steps {
                 script {
                     // Determine the Kubernetes namespace
