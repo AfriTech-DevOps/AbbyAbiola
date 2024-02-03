@@ -34,7 +34,6 @@ pipeline {
 
         stage('Trivy File Scan') {
             steps {
-                 sh '/usr/local/bin/trivy --exit-code 0 --severity HIGH,CRITICAL --no-progress abimbola1981/webapp:latest'
                  sh '/usr/local/bin/trivy fs . > trivy_result.txt'
             }
         }
