@@ -79,7 +79,8 @@ pipeline{
         stage('Docker Build') {
             steps {
                 script {
-                    sh 'docker build -t abimbola1981/abbyraphee:latest .'
+                    def imageTag = determineTargetEnvironment()
+                    sh "docker build -t abimbola1981/abbyraphee:${imageTag} ."
                     echo "Image Build Successfully"
                 }
             }
@@ -88,7 +89,8 @@ pipeline{
         stage('Trivy Image Scan') {
             steps {
                 script {
-                    sh '/usr/local/bin/trivy image abimbola1981/abbyraphee:latest > trivy_image_result.txt'
+                    def imageTag = determineTargetEnvironment()
+                    sh "/usr/local/bin/trivy image abimbola1981/abbyraphee:${imageTag} > trivy_image_result.txt"
                     sh 'pwd'
                 }
             }
@@ -97,35 +99,36 @@ pipeline{
         stage('Docker Push') {
             steps {
                 script {
-                    sh 'docker push abimbola1981/abbyraphee:latest'
+                    def imageTag = determineTargetEnvironment()
+                    sh "docker push abimbola1981/abbyraphee:${imageTag}"
                     echo "Push Image to Registry"
                 }
         
             }
         }
 
-        stage('Kubernetes Deployment') {
-            when {
-                expression {
-                    env.BRANCH_NAME == 'qa' || env.BRANCH_NAME == 'prod' || env.BRANCH_NAME == 'dev'
-                }
-            }
-            steps {
-                script {
-                    // Determine the Kubernetes namespace
-                    if (env.BRANCH_NAME == 'qa') {
-                        NAMESPACE = 'qa-namespace'
-                    } else if (env.BRANCH_NAME == 'prod') {
-                        NAMESPACE = 'prod-namespace'
-                    } else if (env.BRANCH_NAME == 'dev') {
-                        NAMESPACE = 'dev-namespace'
-                    }
+         stage('Kubernetes Deployment') {
+             when {
+                 expression {
+                     env.BRANCH_NAME == 'qa' || env.BRANCH_NAME == 'prod' || env.BRANCH_NAME == 'dev'
+                 }
+             }
+             steps {
+                 script {
+                     // Determine the Kubernetes namespace
+                     if (env.BRANCH_NAME == 'qa') {
+                         NAMESPACE = 'qa-namespace'
+                     } else if (env.BRANCH_NAME == 'prod') {
+                         NAMESPACE = 'prod-namespace'
+                     } else if (env.BRANCH_NAME == 'dev') {
+                         NAMESPACE = 'dev-namespace'
+                     }
 
-                    // Apply Kubernetes manifests
-                    sh "kubectl apply -f k8s/${NAMESPACE}/"
-                    echo "Deployment to ${NAMESPACE} Namespace Successful"
-                }
-            }
+                     // Apply Kubernetes manifests
+                     sh "kubectl apply -f k8s/${NAMESPACE}/"
+                     echo "Deployment to ${NAMESPACE} Namespace Successful"
+                 }
+             }
         }
     }
 }
