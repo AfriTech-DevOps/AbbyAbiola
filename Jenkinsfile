@@ -67,7 +67,6 @@ pipeline {
             steps {
                 sh '/usr/local/bin/trivy image abimbola1981/abbyraphee:latest > trivy_image_result.txt'
                 sh 'pwd'
-                sh 'ls -l'
             }
         }
 
