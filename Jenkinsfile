@@ -11,7 +11,7 @@ def determineTargetEnvironment() {
     }
 }
 
-pipeline {
+pipeline{
     agent any
 
     environment {
