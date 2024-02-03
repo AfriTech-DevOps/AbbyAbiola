@@ -1,10 +1,25 @@
-pipeline {
+def determineTargetEnvironment() {
+    def branchName = env.BRANCH_NAME
+    if (branchName == 'qa') {
+        return 'qa-namespace'
+    } else if (branchName == 'prod') {
+        return 'prod-namespace'
+    } else if (branchName == 'dev') {
+        return 'dev-namespace'
+    } else {
+        return 'default-namespace'
+    }
+}
+
+pipeline{
     agent any
 
     environment {
         SCANNER_HOME = tool 'sonar-scanner'
         DOCKERHUB_CREDENTIALS = credentials('Docker_hub')
-        KUBECONFIG = '/root/.kube/config'
+        KUBE_CONFIG = credentials('KUBECRED')
+        BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
+        NAMESPACE = determineTargetEnvironment()
     }
 
     stages {
@@ -90,15 +105,30 @@ pipeline {
         }
 
         stage('Kubernetes Deployment') {
+            when {
                 expression {
                     env.BRANCH_NAME == 'qa' || env.BRANCH_NAME == 'prod' || env.BRANCH_NAME == 'dev'
                 }
             }
+        stage('Set KUBECONFIG') {
             steps {
-                script{
+                script {
+                    env.KUBECONFIG = '/root/.kube/config'
+                }
+            }
+        }
+
+            steps {
+                script {
                     // Determine the Kubernetes namespace
-                    def NAMESPACE = determineTargetEnvironment()
-                    
+                    if (env.BRANCH_NAME == 'qa') {
+                        NAMESPACE = 'qa-namespace'
+                    } else if (env.BRANCH_NAME == 'prod') {
+                        NAMESPACE = 'prod-namespace'
+                    } else if (env.BRANCH_NAME == 'dev') {
+                        NAMESPACE = 'dev-namespace'
+                    }
+
                     // Apply Kubernetes manifests
                     sh "kubectl apply -f k8s/${NAMESPACE}/"
                     echo "Deployment to ${NAMESPACE} Namespace Successful"
@@ -106,4 +136,4 @@ pipeline {
             }
         }
     }
-
+}
