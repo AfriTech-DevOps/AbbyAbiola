@@ -45,8 +45,6 @@ pipeline {
                     waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
                 }
             }
-
-        
         }
 
         stage('Login to DockerHUB') {
