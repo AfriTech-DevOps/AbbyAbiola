@@ -106,17 +106,17 @@ pipeline {
         stage('Kubernetes Deployment') {
             when {
                 expression {
-                    BRANCH_NAME == 'qa' || BRANCH_NAME == 'prod' || BRANCH_NAME == 'dev'
+                    env.BRANCH_NAME == 'qa' || env.BRANCH_NAME == 'prod' || env.BRANCH_NAME == 'dev'
                 }
             }
             steps {
                 script {
                     // Determine the Kubernetes namespace
-                    if (BRANCH_NAME == 'qa') {
+                    if (env.BRANCH_NAME == 'qa') {
                         NAMESPACE = 'qa-namespace'
-                    } else if (BRANCH_NAME == 'prod') {
+                    } else if (env.BRANCH_NAME == 'prod') {
                         NAMESPACE = 'prod-namespace'
-                    } else if (BRANCH_NAME == 'dev') {
+                    } else if (env.BRANCH_NAME == 'dev') {
                         NAMESPACE = 'dev-namespace'
                     }
 
