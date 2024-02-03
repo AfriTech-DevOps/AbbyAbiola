@@ -6,7 +6,6 @@ pipeline {
         DOCKERHUB_CREDENTIALS = credentials('Docker_hub')
         KUBE_CONFIG = credentials('KUBECRED')
         NAMESPACE = ''
-       
     }
 
     stages {
@@ -15,14 +14,13 @@ pipeline {
                 cleanWs()
             }
         }
-    }    
 
         stage('Checkout from Git') {
             steps {
                 checkout([$class: 'GitSCM',
-                          branches: [[name: '*/dev'], [name: '*/qa'], [name: '*/prod']],
-                          extensions: [],
-                          userRemoteConfigs: [[url: 'https://github.com/Abbyabiola/mentorshippr.git']]])
+                    branches: [[name: '*/dev'], [name: '*/qa'], [name: '*/prod']],
+                    extensions: [],
+                    userRemoteConfigs: [[url: 'https://github.com/Abbyabiola/mentorshippr.git']]])
             }
         }
 
@@ -32,12 +30,10 @@ pipeline {
                     sh "$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Devproject -Dsonar.projectKey=Devproject"
                 }
             }
-        }     
-        stage('Trivy File Scan') {
-    steps {
-        sh '/usr/local/bin/trivy fs . > trivy_result.txt'
-       sh 'pwd'
 
+        stage('Trivy File Scan') {
+            steps {
+                sh '/usr/local/bin/trivy fs . > trivy_result.txt'
             }
         }
 
@@ -76,23 +72,26 @@ pipeline {
                 echo "Push Image to Registry"
             }
         }
+
         stage('Deployment to Kubernetes') {
             steps {
-        script {
-            // Set the Kubernetes namespace based on the branch
-            if (BRANCH_NAME == 'qa') {
-                NAMESPACE = 'qa-namespace'
-            } else if (BRANCH_NAME == 'prod') {
-                NAMESPACE = 'prod-namespace'
-            } else if (BRANCH_NAME == 'dev') {
-                NAMESPACE = 'dev-namespace'
+                script {
+                    // Set the Kubernetes namespace based on the branch
+                    if (BRANCH_NAME == 'qa') {
+                        NAMESPACE = 'qa-namespace'
+                     else if (BRANCH_NAME == 'prod') {
+                        NAMESPACE = 'prod-namespace'
+                    else if (BRANCH_NAME == 'dev') {
+                        NAMESPACE = 'dev-namespace'
+                    }
+                    else {
+                        NAMESPACE = 'default'
+                    }
+                }
             }
-
-            // Apply Kubernetes manifests
-            sh "kubectl apply -f k8s/${NAMESPACE}/"
+                    sh "kubectl apply -f k8s/${NAMESPACE}/"
+                }
+            }
         }
     }
 }
-}
-
-
