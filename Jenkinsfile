@@ -79,7 +79,8 @@ pipeline{
         stage('Docker Build') {
             steps {
                 script {
-                    sh 'docker build -t abimbola1981/abbyraphee:latest .'
+                    def imageTag = determineTargetEnvironment()
+                    sh "docker build -t abimbola1981/abbyraphee:${imageTag} ."
                     echo "Image Build Successfully"
                 }
             }
@@ -88,7 +89,8 @@ pipeline{
         stage('Trivy Image Scan') {
             steps {
                 script {
-                    sh '/usr/local/bin/trivy image abimbola1981/abbyraphee:latest > trivy_image_result.txt'
+                    def imageTag = determineTargetEnvironment()
+                    sh "/usr/local/bin/trivy image abimbola1981/abbyraphee:${imageTag} > trivy_image_result.txt"
                     sh 'pwd'
                 }
             }
@@ -97,7 +99,8 @@ pipeline{
         stage('Docker Push') {
             steps {
                 script {
-                    sh 'docker push abimbola1981/abbyraphee:latest'
+                    def imageTag = determineTargetEnvironment()
+                    sh "docker push abimbola1981/abbyraphee:${imageTag}"
                     echo "Push Image to Registry"
                 }
         
