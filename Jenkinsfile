@@ -5,6 +5,7 @@ pipeline {
         SCANNER_HOME = tool 'sonar-scanner'
         DOCKERHUB_CREDENTIALS = credentials('Docker_hub')
         KUBE_CONFIG = credentials('KUBECRED')
+        NAMESPACE = ''
        
     }
 
@@ -70,6 +71,29 @@ pipeline {
             steps {
                 sh 'docker push abimbola1981/abbyraphee:latest'
                 echo "Push Image to Registry"
+            }
+        }
+        stage('Deployment to Kubernetes') {
+            when {
+                anyOf {
+                    branch 'qa'
+                    branch 'prod'
+                    branch 'dev'
+                }
+            }
+            steps {
+                script {
+                    if (BRANCH_NAME == 'qa') {
+                        NAMESPACE = 'qa-namespace'
+                    } else if (BRANCH_NAME == 'prod') {
+                        NAMESPACE = 'prod-namespace'
+                    } else if (BRANCH_NAME == 'dev') {
+                        NAMESPACE = 'dev-namespace'
+                    }
+
+                    // Apply Kubernetes manifests
+                    sh "kubectl apply -f k8s/${NAMESPACE}/"
+                }
             }
         }
     }
