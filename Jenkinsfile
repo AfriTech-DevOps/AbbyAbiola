@@ -96,7 +96,7 @@ pipeline {
                 }
             }
             steps {
-                script {
+                script{
                     // Determine the Kubernetes namespace
                     def NAMESPACE = determineTargetEnvironment()
                     
