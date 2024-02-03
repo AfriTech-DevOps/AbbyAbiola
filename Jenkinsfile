@@ -63,7 +63,7 @@ pipeline {
 
         stage('Trivy Image Scan') {
             steps {
-                sh 'trivy image --exit-code 0 --severity HIGH,CRITICAL --no-progress abimbola1981/abbyraphee:latest'
+                sh '/usr/local/bin/trivy image abimbola1981/abbyraphee:latest > trivy_image_result.txt'
                 sh 'pwd'
                 sh 'ls -l'
             }
