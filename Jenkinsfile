@@ -33,9 +33,11 @@ pipeline {
 
         stage('Trivy File Scan') {
             steps {
+            script {
                 sh '/usr/local/bin/trivy fs . > trivy_result.txt'
             }
         }
+    }
 
         stage('Quality Gate') {
             steps {
@@ -47,31 +49,40 @@ pipeline {
 
         stage('Login to DockerHUB') {
             steps {
+                script {
                 sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
                 echo 'Login Succeeded'
             }
         }
+    }
 
         stage('Docker Build') {
             steps {
+                script {
                 sh 'docker build -t abimbola1981/abbyraphee:latest .' 
                 echo "Image Build Successfully"
             }
         }
+    }
 
         stage('Trivy Image Scan') {
             steps {
+                script {
+
                 sh '/usr/local/bin/trivy image abimbola1981/abbyraphee:latest > trivy_image_result.txt'
                 sh 'pwd'
             }
         }
+    }
 
         stage('Docker Push') {
             steps {
+                script {
                 sh 'docker push abimbola1981/abbyraphee:latest'
                 echo "Push Image to Registry"
             }
         }
+    }
 
         stage('Deployment to Kubernetes') {
             
