@@ -65,6 +65,7 @@ pipeline {
             steps {
                 sh 'trivy image --exit-code 0 --severity HIGH,CRITICAL --no-progress abimbola1981/abbyraphee:latest'
                 sh 'pwd'
+                sh 'ls -l'
             }
         }
 
