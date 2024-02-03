@@ -15,6 +15,7 @@ pipeline {
                 cleanWs()
             }
         }
+    }    
 
         stage('Checkout from Git') {
             steps {
@@ -31,7 +32,7 @@ pipeline {
                     sh "$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Devproject -Dsonar.projectKey=Devproject"
                 }
             }
-     }     
+        }     
         stage('Trivy File Scan') {
     steps {
         sh '/usr/local/bin/trivy fs . > trivy_result.txt'
@@ -76,27 +77,22 @@ pipeline {
             }
         }
         stage('Deployment to Kubernetes') {
-            when {
-                anyOf {
-                    branch 'qa'
-                    branch 'prod'
-                    branch 'dev'
-                }
-            }
             steps {
-                script {
-                    if (BRANCH_NAME == 'qa') {
-                        NAMESPACE = 'qa-namespace'
-                    } else if (BRANCH_NAME == 'prod') {
-                        NAMESPACE = 'prod-namespace'
-                    } else if (BRANCH_NAME == 'dev') {
-                        NAMESPACE = 'dev-namespace'
-                    }
-
-                    // Apply Kubernetes manifests
-                    sh "kubectl apply -f k8s/${NAMESPACE}/"
-                }
+        script {
+            // Set the Kubernetes namespace based on the branch
+            if (BRANCH_NAME == 'qa') {
+                NAMESPACE = 'qa-namespace'
+            } else if (BRANCH_NAME == 'prod') {
+                NAMESPACE = 'prod-namespace'
+            } else if (BRANCH_NAME == 'dev') {
+                NAMESPACE = 'dev-namespace'
             }
+
+            // Apply Kubernetes manifests
+            sh "kubectl apply -f k8s/${NAMESPACE}/"
         }
     }
 }
+}
+
+
