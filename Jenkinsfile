@@ -35,6 +35,7 @@ pipeline {
         stage('Trivy File Scan') {
             steps {
                 sh 'trivy fs . > trivy_result.txt'
+                sh 'pwd'
             }
         }
 
