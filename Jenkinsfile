@@ -6,12 +6,17 @@ pipeline {
         DOCKERHUB_CREDENTIALS = credentials('Docker_hub')
         KUBE_CONFIG = credentials('KUBECRED')
         NAMESPACE = determineTargetEnvironment()
-    }
+  }
 
     stages {
+        stage('Cleaning up workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
         stage('Checkout from Git') {
             steps {
-                cleanWs() // Clean workspace before checking out code
                 checkout([$class: 'GitSCM',
                     branches: [[name: '*/dev'], [name: '*/qa'], [name: '*/prod']],
                     extensions: [],
