@@ -30,7 +30,6 @@ pipeline {
                     sh "$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Devproject -Dsonar.projectKey=Devproject"
                 }
             }
-        }
 
         stage('Trivy File Scan') {
             steps {
@@ -64,7 +63,6 @@ pipeline {
             steps {
                 sh '/usr/local/bin/trivy image abimbola1981/abbyraphee:latest > trivy_image_result.txt'
                 sh 'pwd'
-                sh 'ls -l'
             }
         }
 
