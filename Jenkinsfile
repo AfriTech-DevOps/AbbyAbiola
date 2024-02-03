@@ -18,6 +18,7 @@ pipeline {
         SCANNER_HOME = tool 'sonar-scanner'
         DOCKERHUB_CREDENTIALS = credentials('Docker_hub')
         KUBE_CONFIG = credentials('KUBECRED')
+        BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
         NAMESPACE = determineTargetEnvironment()
     }
 
