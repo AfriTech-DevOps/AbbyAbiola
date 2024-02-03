@@ -107,28 +107,28 @@ pipeline{
             }
         }
 
-        stage('Kubernetes Deployment') {
-            when {
-                expression {
-                    env.BRANCH_NAME == 'qa' || env.BRANCH_NAME == 'prod' || env.BRANCH_NAME == 'dev'
-                }
-            }
-            steps {
-                script {
-                    // Determine the Kubernetes namespace
-                    if (env.BRANCH_NAME == 'qa') {
-                        NAMESPACE = 'qa-namespace'
-                    } else if (env.BRANCH_NAME == 'prod') {
-                        NAMESPACE = 'prod-namespace'
-                    } else if (env.BRANCH_NAME == 'dev') {
-                        NAMESPACE = 'dev-namespace'
-                    }
+        // stage('Kubernetes Deployment') {
+        //     when {
+        //         expression {
+        //             env.BRANCH_NAME == 'qa' || env.BRANCH_NAME == 'prod' || env.BRANCH_NAME == 'dev'
+        //         }
+        //     }
+        //     steps {
+        //         script {
+        //             // Determine the Kubernetes namespace
+        //             if (env.BRANCH_NAME == 'qa') {
+        //                 NAMESPACE = 'qa-namespace'
+        //             } else if (env.BRANCH_NAME == 'prod') {
+        //                 NAMESPACE = 'prod-namespace'
+        //             } else if (env.BRANCH_NAME == 'dev') {
+        //                 NAMESPACE = 'dev-namespace'
+        //             }
 
-                    // Apply Kubernetes manifests
-                    sh "kubectl apply -f k8s/${NAMESPACE}/"
-                    echo "Deployment to ${NAMESPACE} Namespace Successful"
-                }
-            }
-        }
+        //             // Apply Kubernetes manifests
+        //             sh "kubectl apply -f k8s/${NAMESPACE}/"
+        //             echo "Deployment to ${NAMESPACE} Namespace Successful"
+        //         }
+        //     }
+        // }
     }
 }
