@@ -1,3 +1,16 @@
+def determineTargetEnvironment() {
+    def branchName = env.BRANCH_NAME
+    if (branchName == 'qa') {
+        return 'qa-namespace'
+    } else if (branchName == 'prod') {
+        return 'prod-namespace'
+    } else if (branchName == 'dev') {
+        return 'dev-namespace'
+    } else {
+        return 'default-namespace'
+    }
+}
+
 pipeline {
     agent any
 
@@ -6,7 +19,7 @@ pipeline {
         DOCKERHUB_CREDENTIALS = credentials('Docker_hub')
         KUBE_CONFIG = credentials('KUBECRED')
         NAMESPACE = determineTargetEnvironment()
-  }
+    }
 
     stages {
         stage('Cleaning up workspace') {
@@ -35,7 +48,7 @@ pipeline {
             }
         }
 
-        stage('Static Code Security Scan') {
+        stage('Trivy File Scan') {
             steps {
                 script {
                     // Run Trivy security scan on code files
@@ -52,18 +65,43 @@ pipeline {
                 }
             }
         }
-
-        stage('Docker Build and Push') {
+ stage('Login to DockerHUB') {
             steps {
                 script {
-                    // Build Docker image and push to Docker Hub
-                    sh 'docker build -t abimbola1981/abbyraphee:latest .'
-                    sh 'docker login -u $DOCKERHUB_CREDENTIALS_USR -p $DOCKERHUB_CREDENTIALS_PSW'
-                    sh 'docker push abimbola1981/abbyraphee:latest'
-                    echo "Image Build and Pushed Successfully"
+                    sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
+                    echo 'Login Succeeded'
                 }
             }
         }
+
+        stage('Docker Build') {
+            steps {
+                script {
+                    sh 'docker build -t abimbola1981/abbyraphee:latest .'
+                    echo "Image Build Successfully"
+                }
+            }
+        }
+
+        stage('Trivy Image Scan') {
+            steps {
+                script {
+                    sh '/usr/local/bin/trivy image abimbola1981/abbyraphee:latest > trivy_image_result.txt'
+                    sh 'pwd'
+                }
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                script {
+                    sh 'docker push abimbola1981/abbyraphee:latest'
+                    echo "Push Image to Registry"
+                }
+        
+            }
+        }
+
 
         stage('Kubernetes Deployment') {
             when {
