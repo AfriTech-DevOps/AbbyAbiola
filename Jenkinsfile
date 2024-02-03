@@ -90,7 +90,6 @@ pipeline {
         }
 
         stage('Kubernetes Deployment') {
-            when {
                 expression {
                     env.BRANCH_NAME == 'qa' || env.BRANCH_NAME == 'prod' || env.BRANCH_NAME == 'dev'
                 }
