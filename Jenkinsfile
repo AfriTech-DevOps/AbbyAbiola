@@ -35,6 +35,7 @@ pipeline {
         stage('Trivy File Scan') {
             steps {
                 sh 'trivy fs . > trivy_result.txt'
+                sh 'pwd'
             }
         }
 
@@ -44,8 +45,6 @@ pipeline {
                     waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
                 }
             }
-
-        
         }
 
         stage('Login to DockerHUB') {
