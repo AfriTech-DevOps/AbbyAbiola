@@ -11,13 +11,14 @@ def determineTargetEnvironment() {
     }
 }
 
-pipeline {
+pipeline{
     agent any
 
     environment {
         SCANNER_HOME = tool 'sonar-scanner'
         DOCKERHUB_CREDENTIALS = credentials('Docker_hub')
         KUBE_CONFIG = credentials('KUBECRED')
+        env.KUBECONFIG = '/root/.kube/config'
         BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
         NAMESPACE = determineTargetEnvironment()
     }
