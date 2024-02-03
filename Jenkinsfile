@@ -5,6 +5,7 @@ pipeline {
         SCANNER_HOME = tool 'sonar-scanner'
         DOCKERHUB_CREDENTIALS = credentials('Docker_hub')
         KUBE_CONFIG = credentials('KUBECRED')
+        NAMESPACE = ''
        
     }
 
@@ -30,12 +31,12 @@ pipeline {
                     sh "$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Devproject -Dsonar.projectKey=Devproject"
                 }
             }
-        }
-
+     }     
         stage('Trivy File Scan') {
-            steps {
-                 sh '/usr/local/bin/trivy --exit-code 0 --severity HIGH,CRITICAL --no-progress abimbola1981/webapp:latest'
-                 sh '/usr/local/bin/trivy fs . > trivy_result.txt'
+    steps {
+        sh '/usr/local/bin/trivy fs . > trivy_result.txt'
+       sh '/usr/local/bin/trivy --exit-code 0 --severity HIGH,CRITICAL --no-progress abimbola1981/webapp:latest'
+
             }
         }
 
@@ -45,8 +46,6 @@ pipeline {
                     waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
                 }
             }
-
-        
         }
 
         stage('Login to DockerHUB') {
@@ -65,7 +64,9 @@ pipeline {
 
         stage('Trivy Image Scan') {
             steps {
-                sh 'trivy image --exit-code 0 --severity HIGH,CRITICAL --no-progress abimbola1981/abbyraphee:latest'
+                sh '/usr/local/bin/trivy image abimbola1981/abbyraphee:latest > trivy_image_result.txt'
+                sh 'pwd'
+                sh 'ls -l'
             }
         }
 
@@ -73,6 +74,29 @@ pipeline {
             steps {
                 sh 'docker push abimbola1981/abbyraphee:latest'
                 echo "Push Image to Registry"
+            }
+        }
+        stage('Deployment to Kubernetes') {
+            when {
+                anyOf {
+                    branch 'qa'
+                    branch 'prod'
+                    branch 'dev'
+                }
+            }
+            steps {
+                script {
+                    if (BRANCH_NAME == 'qa') {
+                        NAMESPACE = 'qa-namespace'
+                    } else if (BRANCH_NAME == 'prod') {
+                        NAMESPACE = 'prod-namespace'
+                    } else if (BRANCH_NAME == 'dev') {
+                        NAMESPACE = 'dev-namespace'
+                    }
+
+                    // Apply Kubernetes manifests
+                    sh "kubectl apply -f k8s/${NAMESPACE}/"
+                }
             }
         }
     }
