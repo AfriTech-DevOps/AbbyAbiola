@@ -60,7 +60,7 @@ pipeline {
         stage('Docker Build') {
             steps {
                 script {
-                    sh 'docker build -t abimbola1981/abbyraphee:latest'
+                    sh 'docker build -t abimbola1981/abbyraphee:latest .'
                     echo "Image Build Successfully"
                 }
             }
