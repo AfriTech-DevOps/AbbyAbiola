@@ -34,7 +34,7 @@ pipeline{
                 checkout([$class: 'GitSCM',
                     branches: [[name: '*/dev'], [name: '*/qa'], [name: '*/prod']],
                     extensions: [],
-                    userRemoteConfigs: [[url: 'https://github.com/Abbyabiola/mentorshippr.git']]])
+                    userRemoteConfigs: [[url: 'https://github.com/AfriTech-DevOps/AbbyAbiola.git']]])
             }
         }
 
