@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rapheebeauty-db-config
+  namespace: rapheebeauty-ns
+data:
+  MYSQL_HOST: "216.80.104.71"
+  MYSQL_USER: "root"
+  MYSQL_PASSWORD: "devops2023"
+  MYSQL_DATABASE: "rapheebeauty"

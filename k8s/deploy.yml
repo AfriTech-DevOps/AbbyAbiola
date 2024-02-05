@@ -16,8 +16,8 @@ spec:
         app: rapheebeauty
     spec:
       containers:
-        - name: rapheebeauty-latest
-          image: idrisniyi94/rapheebeauty
+        - name: abbyraphee:latest
+          image: abimbola1981/abbyraphee:latest
           ports:
             - containerPort: 8000
           resources:
