@@ -97,7 +97,7 @@ pipeline {
             }
         }
 
-        stage('Deployment to Kubernetes') {
+        stage('Build and Deploy') {
             when {
                 expression {
                     BRANCH_NAME == 'qa' || BRANCH_NAME == 'prod' || BRANCH_NAME == 'dev'
