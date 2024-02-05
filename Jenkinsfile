@@ -101,6 +101,28 @@ pipeline {
             }
         }
 
+          stage('OWASP Scan') {
+            when {
+                expression {
+                    BRANCH_NAME == 'qa' || BRANCH_NAME == 'prod' || BRANCH_NAME == 'dev'
+                }
+            }
+            steps {
+                script {
+                    def imageTag = determineTargetEnvironment()
+                    
+                    // Run OWASP ZAP scan
+                    sh "docker run -t --rm -v \$(pwd)/zap:/zap/wrk/:rw -i owasp/zap2docker-stable zap-baseline.py -t https://github.com/Abbyabiola/mentorshippr.git -r zap_report.html"
+                    
+                    // Archive the OWASP ZAP report
+                    archiveArtifacts artifacts: 'zap/zap_report.html', allowEmptyArchive: true
+                    
+                    echo "OWASP Scan Completed"
+                }
+            }
+        }
+
+
         stage('Build and Deploy') {
             when {
                 expression {
