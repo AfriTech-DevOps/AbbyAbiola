@@ -34,7 +34,7 @@ pipeline {
                 checkout([$class: 'GitSCM',
                     branches: [[name: '*/dev'], [name: '*/qa'], [name: '*/prod']],
                     extensions: [],
-                    userRemoteConfigs: [[url: 'https://github.com/Abbyabiola/mentorshippr.git']]])
+                    userRemoteConfigs: [[url: 'https://github.com/AfriTech-DevOps/AbbyAbiola.git']]])
             }
         }
 
@@ -112,7 +112,7 @@ pipeline {
                     def imageTag = determineTargetEnvironment()
                     
                     // Run OWASP ZAP scan
-                    sh "docker run -t --rm -v \$(pwd)/zap:/zap/wrk/:rw -i owasp/zap2docker-stable zap-baseline.py -t https://github.com/Abbyabiola/mentorshippr.git -r zap_report.html"
+                    sh "docker run -t --rm -v \$(pwd)/zap:/zap/wrk/:rw -i owasp/zap2docker-stable zap-baseline.py -t http://18.220.182.78:8081/ -r zap_report.html"
                     
                     // Archive the OWASP ZAP report
                     archiveArtifacts artifacts: 'zap/zap_report.html', allowEmptyArchive: true
