@@ -11,14 +11,13 @@ def determineTargetEnvironment() {
     }
 }
 
-pipeline{
+pipeline {
     agent any
 
     environment {
         SCANNER_HOME = tool 'sonar-scanner'
         DOCKERHUB_CREDENTIALS = credentials('Docker_hub')
         KUBE_CONFIG = credentials('KUBECRED')
-        BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
         NAMESPACE = determineTargetEnvironment()
     }
 
@@ -34,17 +33,14 @@ pipeline{
                 checkout([$class: 'GitSCM',
                     branches: [[name: '*/dev'], [name: '*/qa'], [name: '*/prod']],
                     extensions: [],
-                    userRemoteConfigs: [[url: 'https://github.com/AfriTech-DevOps/AbbyAbiola.git']]])
+                    userRemoteConfigs: [[url: 'https://github.com/Abbyabiola/mentorshippr.git']]])
             }
         }
 
-        stage('Code Analysis') {
+        stage('Sonarqube Analysis') {
             steps {
-                script {
-                    // Run SonarQube analysis
-                    withSonarQubeEnv('sonar-server') {
-                        sh "$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Devproject -Dsonar.projectKey=Devproject"
-                    }
+                withSonarQubeEnv('sonar-server') {
+                    sh "$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Devproject -Dsonar.projectKey=Devproject"
                 }
             }
         }
@@ -52,7 +48,6 @@ pipeline{
         stage('Trivy File Scan') {
             steps {
                 script {
-                    // Run Trivy security scan on code files
                     sh '/usr/local/bin/trivy fs . > trivy_result.txt'
                 }
             }
@@ -61,7 +56,6 @@ pipeline{
         stage('Quality Gate') {
             steps {
                 script {
-                    // Wait for SonarQube Quality Gate to pass
                     waitForQualityGate abortPipeline: false, credentialsId: 'Sonar-Token'
                 }
             }
@@ -79,18 +73,16 @@ pipeline{
         stage('Docker Build') {
             steps {
                 script {
-                    def imageTag = determineTargetEnvironment()
-                    sh "docker build -t abimbola1981/abbyraphee:${imageTag} ."
+                    sh 'docker build -t abimbola1981/abbyraphee:latest .'
                     echo "Image Build Successfully"
                 }
             }
         }
-
+ 
         stage('Trivy Image Scan') {
             steps {
                 script {
-                    def imageTag = determineTargetEnvironment()
-                    sh "/usr/local/bin/trivy image abimbola1981/abbyraphee:${imageTag} > trivy_image_result.txt"
+                    sh '/usr/local/bin/trivy image abimbola1981/abbyraphee:latest > trivy_image_result.txt'
                     sh 'pwd'
                 }
             }
@@ -99,36 +91,34 @@ pipeline{
         stage('Docker Push') {
             steps {
                 script {
-                    def imageTag = determineTargetEnvironment()
-                    sh "docker push abimbola1981/abbyraphee:${imageTag}"
+                    sh 'docker push abimbola1981/abbyraphee:latest'
                     echo "Push Image to Registry"
                 }
-        
             }
         }
 
-         stage('Kubernetes Deployment') {
-             when {
-                 expression {
-                     env.BRANCH_NAME == 'qa' || env.BRANCH_NAME == 'prod' || env.BRANCH_NAME == 'dev'
-                 }
-             }
-             steps {
-                 script {
-                     // Determine the Kubernetes namespace
-                     if (env.BRANCH_NAME == 'qa') {
-                         NAMESPACE = 'qa-namespace'
-                     } else if (env.BRANCH_NAME == 'prod') {
-                         NAMESPACE = 'prod-namespace'
-                     } else if (env.BRANCH_NAME == 'dev') {
-                         NAMESPACE = 'dev-namespace'
-                     }
+        stage('Deployment to Kubernetes') {
+            when {
+                expression {
+                    BRANCH_NAME == 'qa' || BRANCH_NAME == 'prod' || BRANCH_NAME == 'dev'
+                }
+            }
+            steps {
+                script {
+                    // Set the Kubernetes namespace based on the branch
+                    if (BRANCH_NAME == 'qa') {
+                        NAMESPACE = 'qa-namespace'
+                    } else if (BRANCH_NAME == 'prod') {
+                        NAMESPACE = 'prod-namespace'
+                    } else if (BRANCH_NAME == 'dev') {
+                        NAMESPACE = 'dev-namespace'
+                    }
 
-                     // Apply Kubernetes manifests
-                     sh "kubectl apply -f k8s/${NAMESPACE}/"
-                     echo "Deployment to ${NAMESPACE} Namespace Successful"
-                 }
-             }
+                    // Apply Kubernetes manifests
+                    sh "kubectl apply -f k8s/${NAMESPACE}/"
+                    echo "Deployment to ${NAMESPACE} Namespace Successful"
+                }
+            }
         }
     }
 }
