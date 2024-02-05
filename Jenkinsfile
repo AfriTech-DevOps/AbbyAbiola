@@ -18,6 +18,7 @@ pipeline {
         SCANNER_HOME = tool 'sonar-scanner'
         DOCKERHUB_CREDENTIALS = credentials('Docker_hub')
         KUBE_CONFIG = credentials('KUBECRED')
+        BRANCH_NAME = "${GIT_BRANCH.split("/")[1]}"
         NAMESPACE = determineTargetEnvironment()
     }
 
@@ -73,6 +74,7 @@ pipeline {
         stage('Docker Build') {
             steps {
                 script {
+                    def imageTag = determineTargetEnvironment()
                     sh 'docker build -t abimbola1981/abbyraphee:latest .'
                     echo "Image Build Successfully"
                 }
@@ -82,6 +84,7 @@ pipeline {
         stage('Trivy Image Scan') {
             steps {
                 script {
+                    def imageTag = determineTargetEnvironment()
                     sh '/usr/local/bin/trivy image abimbola1981/abbyraphee:latest > trivy_image_result.txt'
                     sh 'pwd'
                 }
@@ -91,6 +94,7 @@ pipeline {
         stage('Docker Push') {
             steps {
                 script {
+                    def imageTag = determineTargetEnvironment()
                     sh 'docker push abimbola1981/abbyraphee:latest'
                     echo "Push Image to Registry"
                 }
